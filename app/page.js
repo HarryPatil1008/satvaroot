@@ -644,7 +644,10 @@ const EnquiryForm = ({ onSuccess, preProduct, dark = true }) => {
     try {
       const r = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
       if (r.ok) { onSuccess?.(); setForm({ name: '', company: '', country: '', email: '', phone: '', whatsapp: '', product: '', quantity: '', message: '' }) }
-      else toast.error('Failed to send enquiry')
+      else {
+        const data = await r.json().catch(() => ({}))
+        toast.error(data.error || 'Failed to send enquiry')
+      }
     } catch { toast.error('Network error') }
     setSubmitting(false)
   }
