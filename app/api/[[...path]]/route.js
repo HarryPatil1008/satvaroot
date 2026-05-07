@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'satvaroot'
+const ENQUIRY_NOTIFY_WEBHOOK_URL = process.env.ENQUIRY_NOTIFY_WEBHOOK_URL
 
 let _client = null
 async function getDb() {
@@ -16,6 +17,31 @@ async function getDb() {
 
 const json = (data, status = 200) => NextResponse.json(data, { status })
 const err = (message, status = 400) => NextResponse.json({ error: message }, { status })
+
+async function sendEnquiryNotification(enquiry) {
+  if (!ENQUIRY_NOTIFY_WEBHOOK_URL) return
+  const lines = [
+    '🆕 New enquiry received',
+    `Name: ${enquiry.name}`,
+    `Email: ${enquiry.email}`,
+    `Phone: ${enquiry.phone || '-'}`,
+    `Company: ${enquiry.company || '-'}`,
+    `Country: ${enquiry.country || '-'}`,
+    `Product: ${enquiry.product || '-'}`,
+    `Quantity: ${enquiry.quantity || '-'}`,
+    `Message: ${enquiry.message || '-'}`
+  ]
+  const body = { text: lines.join('\n') }
+  try {
+    await fetch(ENQUIRY_NOTIFY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+  } catch (e) {
+    console.error('Failed to send enquiry notification', e)
+  }
+}
 
 // ---------- Sample products to seed ----------
 const SAMPLE_PRODUCTS = [
@@ -418,6 +444,7 @@ async function handle(request, segments) {
       createdAt: new Date()
     }
     await db.collection('enquiries').insertOne(enquiry)
+    await sendEnquiryNotification(enquiry)
     delete enquiry._id
     return json({ ok: true, enquiry })
   }
