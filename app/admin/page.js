@@ -86,18 +86,22 @@ const Dashboard = ({ token, onLogout }) => {
   const [stats, setStats] = useState(null)
   const [products, setProducts] = useState([])
   const [enquiries, setEnquiries] = useState([])
+  const [blogs, setBlogs] = useState([])
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [editingBlog, setEditingBlog] = useState(null)
+  const [addingBlog, setAddingBlog] = useState(false)
 
   const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 
   const refresh = async () => {
-    const [s, p, e] = await Promise.all([
+    const [s, p, e, b] = await Promise.all([
       fetch('/api/admin/stats', { headers: auth }).then(r => r.json()),
       fetch('/api/products').then(r => r.json()),
-      fetch('/api/enquiries', { headers: auth }).then(r => r.json())
+      fetch('/api/enquiries', { headers: auth }).then(r => r.json()),
+      fetch('/api/blogs/all', { headers: auth }).then(r => r.json())
     ])
-    setStats(s); setProducts(p.products || []); setEnquiries(e.enquiries || [])
+    setStats(s); setProducts(p.products || []); setEnquiries(e.enquiries || []); setBlogs(b.blogs || [])
   }
   useEffect(() => { refresh() }, [])
 
@@ -133,6 +137,19 @@ const Dashboard = ({ token, onLogout }) => {
     if (r.ok) { toast.success('Saved'); setEditing(null); setAdding(false); refresh() } else toast.error('Failed')
   }
 
+  const saveBlog = async (data) => {
+    const url = data.id ? `/api/blogs/${data.id}` : '/api/blogs'
+    const method = data.id ? 'PUT' : 'POST'
+    const r = await fetch(url, { method, headers: auth, body: JSON.stringify(data) })
+    if (r.ok) { toast.success('Blog saved'); setEditingBlog(null); setAddingBlog(false); refresh() } else toast.error('Failed')
+  }
+
+  const deleteBlog = async (id) => {
+    if (!confirm('Delete blog post?')) return
+    await fetch(`/api/blogs/${id}`, { method: 'DELETE', headers: auth })
+    toast.success('Deleted'); refresh()
+  }
+
   return (
     <div className="min-h-screen bg-[#faf6ee]">
       <header className="bg-[#0f3d2e] text-white border-b border-[#d4af37]/20">
@@ -164,6 +181,7 @@ const Dashboard = ({ token, onLogout }) => {
           <TabsList className="bg-white border">
             <TabsTrigger value="enquiries">Enquiries ({enquiries.length})</TabsTrigger>
             <TabsTrigger value="products">Products ({products.length})</TabsTrigger>
+            <TabsTrigger value="blogs">Blogs ({blogs.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="enquiries" className="mt-6">
@@ -251,6 +269,37 @@ const Dashboard = ({ token, onLogout }) => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="blogs" className="mt-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="font-display text-2xl">Blog Posts</h2>
+                  <Button onClick={() => setAddingBlog(true)} className="bg-[#0f3d2e] text-white"><Plus className="w-4 h-4 mr-1" /> New Post</Button>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {blogs.map(b => (
+                    <div key={b.id} className="border rounded-xl bg-white overflow-hidden hover:shadow-md transition">
+                      <div className="aspect-video bg-[#faf6ee] overflow-hidden">
+                        <img src={b.coverImage} alt={b.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="p-4">
+                        <div className="text-[10px] uppercase tracking-widest text-[#9c7a2a]">{(b.tags || []).slice(0, 2).join(' · ') || 'Blog'}</div>
+                        <div className="font-semibold mt-1 line-clamp-2">{b.title}</div>
+                        <div className="text-xs text-[#0f3d2e]/60 mt-1">{new Date(b.createdAt).toLocaleDateString()}</div>
+                        <div className="flex gap-2 mt-3">
+                          <Button asChild size="sm" variant="outline" className="flex-1"><a href={`/blog/${b.slug}`} target="_blank" rel="noreferrer"><Eye className="w-3 h-3 mr-1" /> View</a></Button>
+                          <Button onClick={() => setEditingBlog(b)} size="sm" variant="outline"><Edit3 className="w-3 h-3" /></Button>
+                          <Button onClick={() => deleteBlog(b.id)} size="sm" variant="outline" className="text-red-600"><Trash2 className="w-3 h-3" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {blogs.length === 0 && <div className="col-span-full p-10 text-center text-[#0f3d2e]/50">No blog posts yet. Click &quot;New Post&quot; to add one.</div>}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -258,6 +307,13 @@ const Dashboard = ({ token, onLogout }) => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader><DialogTitle className="font-display text-2xl">{editing ? 'Edit Product' : 'Add Product'}</DialogTitle></DialogHeader>
           <ProductForm initial={editing} onSave={saveProduct} onCancel={() => { setEditing(null); setAdding(false) }} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingBlog || addingBlog} onOpenChange={(o) => { if (!o) { setEditingBlog(null); setAddingBlog(false) } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+          <DialogHeader><DialogTitle className="font-display text-2xl">{editingBlog ? 'Edit Blog Post' : 'New Blog Post'}</DialogTitle></DialogHeader>
+          <BlogForm initial={editingBlog} onSave={saveBlog} onCancel={() => { setEditingBlog(null); setAddingBlog(false) }} />
         </DialogContent>
       </Dialog>
     </div>
@@ -307,6 +363,34 @@ const ProductForm = ({ initial, onSave, onCancel }) => {
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.featured} onChange={(e) => setF({ ...f, featured: e.target.checked })} /> Featured product</label>
       <div className="flex gap-2 pt-3">
         <Button type="submit" className="bg-[#0f3d2e] text-white flex-1">Save</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+      </div>
+    </form>
+  )
+}
+
+const BlogForm = ({ initial, onSave, onCancel }) => {
+  const [f, setF] = useState(initial || {
+    title: '', slug: '', excerpt: '', content: '',
+    coverImage: 'https://images.unsplash.com/photo-1523112784166-c04db3a3bb7c?crop=entropy&cs=srgb&fm=jpg&w=1200&q=85',
+    author: 'SatvaRoot Export Desk', tags: [], published: true
+  })
+  const upd = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onSave(f) }} className="space-y-3">
+      <Input required placeholder="Title" value={f.title} onChange={upd('title')} />
+      <Input placeholder="Slug (auto-generated if blank)" value={f.slug} onChange={upd('slug')} />
+      <Input placeholder="Cover Image URL" value={f.coverImage} onChange={upd('coverImage')} />
+      <Input placeholder="Author" value={f.author} onChange={upd('author')} />
+      <Input placeholder="Tags (comma separated)" value={(f.tags || []).join(', ')}
+        onChange={(e) => setF({ ...f, tags: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+      <Textarea required placeholder="Excerpt (1-2 sentences)" rows={2} value={f.excerpt} onChange={upd('excerpt')} />
+      <Textarea required placeholder="Full content (markdown supported: **bold**, ## heading, - bullet, 1. list)" rows={10} value={f.content} onChange={upd('content')} />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={f.published !== false} onChange={(e) => setF({ ...f, published: e.target.checked })} /> Published
+      </label>
+      <div className="flex gap-2 pt-3">
+        <Button type="submit" className="bg-[#0f3d2e] text-white flex-1">Save Post</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
       </div>
     </form>

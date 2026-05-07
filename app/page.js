@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import Link from 'next/link'
+import WorldMap from '@/components/WorldMap'
 
 const WA = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210'
 const waLink = (msg) => `https://wa.me/${WA}?text=${encodeURIComponent(msg)}`
@@ -99,13 +101,14 @@ const App = () => {
             </div>
           </a>
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-white/85">
-            {['home','about','products','countries','certifications','testimonials','contact'].map(s => (
+            {['home','about','products','countries','certifications','contact'].map(s => (
               <a key={s} href={`#${s}`} className="hover:text-[#d4af37] transition capitalize">{s}</a>
             ))}
+            <Link href="/blog" className="hover:text-[#d4af37] transition">Blog</Link>
           </div>
           <div className="hidden lg:flex items-center gap-3">
-            <Button onClick={() => setCatalogueOpen(true)} variant="outline" className="border-[#d4af37]/40 bg-transparent text-[#d4af37] hover:bg-[#d4af37] hover:text-[#0f3d2e]">
-              <Download className="w-4 h-4 mr-2" /> Catalogue
+            <Button asChild variant="outline" className="border-[#d4af37]/40 bg-transparent text-[#d4af37] hover:bg-[#d4af37] hover:text-[#0f3d2e]">
+              <Link href="/catalogue"><Download className="w-4 h-4 mr-2" /> Catalogue</Link>
             </Button>
             <Button onClick={() => setEnqOpen(true)} className="bg-gradient-to-r from-[#d4af37] to-[#b08930] text-[#0f3d2e] hover:opacity-90 font-semibold">
               Send Enquiry <ArrowRight className="w-4 h-4 ml-1" />
@@ -118,6 +121,8 @@ const App = () => {
             {['home','about','products','countries','certifications','contact'].map(s => (
               <a key={s} onClick={() => setMobileNavOpen(false)} href={`#${s}`} className="block capitalize py-1">{s}</a>
             ))}
+            <Link onClick={() => setMobileNavOpen(false)} href="/blog" className="block py-1">Blog</Link>
+            <Link onClick={() => setMobileNavOpen(false)} href="/catalogue" className="block py-1">Catalogue</Link>
             <Button onClick={() => { setEnqOpen(true); setMobileNavOpen(false) }} className="w-full bg-[#d4af37] text-[#0f3d2e] font-semibold">Send Enquiry</Button>
           </div>
         )}
@@ -337,6 +342,7 @@ const App = () => {
             <h2 className="font-display text-4xl lg:text-5xl mb-4">Exporting to <span className="gold-text">25+ Countries</span></h2>
             <p className="text-white/70 max-w-2xl mx-auto">From the spice fields of India to kitchens, wellness stores, and distributors across the globe.</p>
           </div>
+          <div className="mb-12"><WorldMap /></div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {COUNTRIES.map(c => (
               <div key={c.name} className="glass rounded-xl p-5 hover:scale-105 transition">
@@ -491,7 +497,7 @@ const App = () => {
                 <Button type="submit" size="icon" className="bg-[#d4af37] text-[#0f3d2e] hover:bg-[#b08930]"><Send className="w-4 h-4" /></Button>
               </form>
             </div>
-            <FooterCol title="Quick Links" items={[['Home', '#home'], ['About', '#about'], ['Products', '#products'], ['Contact', '#contact'], ['Admin', '/admin']]} />
+            <FooterCol title="Quick Links" items={[['Home', '/'], ['About', '#about'], ['Products', '#products'], ['Blog', '/blog'], ['Catalogue', '/catalogue'], ['Contact', '#contact'], ['Admin', '/admin']]} />
             <FooterCol title="Categories" items={CATEGORIES.slice(1, 7).map(c => [c, '#products'])} />
             <FooterCol title="Export Countries" items={COUNTRIES.slice(0, 6).map(c => [`${c.flag} ${c.name}`, '#countries'])} />
           </div>

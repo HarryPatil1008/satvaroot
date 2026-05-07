@@ -237,6 +237,45 @@ const SAMPLE_PRODUCTS = [
   }
 ]
 
+const SAMPLE_BLOGS = [
+  {
+    id: uuidv4(),
+    title: 'The Global Surge in Demand for Indian Turmeric: 2025 Export Outlook',
+    slug: 'indian-turmeric-export-outlook-2025',
+    excerpt: 'India supplies over 75% of the world\u2019s turmeric. Here\u2019s why curcumin-rich Indian turmeric is now the gold standard for global wellness brands.',
+    coverImage: 'https://images.unsplash.com/photo-1523112784166-c04db3a3bb7c?crop=entropy&cs=srgb&fm=jpg&w=1200&q=85',
+    author: 'SatvaRoot Export Desk',
+    tags: ['Turmeric', 'Export', 'Trends'],
+    content: `India produces over 1.1 million metric tons of turmeric annually \u2014 making it the global leader in production, consumption and export. As wellness brands worldwide pivot toward natural, traceable ingredients, demand for high-curcumin Indian turmeric has accelerated.\n\n## Why Indian Turmeric Stands Out\n\n- **Curcumin content of 3\u20137%** in premium varieties (Erode, Salem, Sangli)\n- **Naturally vibrant golden color** without artificial enhancement\n- **Time-tested ayurvedic heritage** dating back 4,000 years\n\n## Top Export Destinations\n\nUAE, USA, UK, Germany and Iran together account for over 60% of India\u2019s turmeric exports. The European market specifically demands organic-certified turmeric with documented curcumin levels.\n\n## What Buyers Should Look For\n\n1. NABL-tested curcumin certification\n2. FSSAI + APEDA + ISO 22000 documentation\n3. Pesticide residue compliance for EU import\n4. Traceability to farm of origin\n\nAt SatvaRoot, every batch is lab-tested and we partner directly with certified farmers in Erode and Sangli to guarantee both quality and traceability.`,
+    published: true,
+    createdAt: new Date()
+  },
+  {
+    id: uuidv4(),
+    title: 'Ashwagandha: The Adaptogen Powering the Global Wellness Boom',
+    slug: 'ashwagandha-global-wellness-boom',
+    excerpt: 'From Manhattan supplement shelves to Berlin pharmacies, ashwagandha has gone mainstream. We unpack the supply chain and what makes premium-grade KSM-66 different.',
+    coverImage: 'https://images.unsplash.com/photo-1704650311291-0e001b7e2b9f?crop=entropy&cs=srgb&fm=jpg&w=1200&q=85',
+    author: 'SatvaRoot Export Desk',
+    tags: ['Ashwagandha', 'Ayurveda', 'Wellness'],
+    content: `Global ashwagandha market is projected to cross **USD 2.4 billion by 2028**, growing at a CAGR of 10%+. India dominates the supply chain.\n\n## What Sets Premium Ashwagandha Apart\n\n- **Withanolides 2.5%+ minimum** (premium grades hit 5%+)\n- **Root-only extracts** \u2014 no leaves, stems or fillers\n- **USDA Organic + India Organic** dual certification\n- **AYUSH GMP** manufacturing for nutraceutical buyers\n\n## Key Importing Countries\n\nUSA leads imports, followed by Germany, UK, Japan and Australia. North American supplement brands now demand identity-tested withanolide content.\n\nAt SatvaRoot, our ashwagandha is sun-dried, shade-finished and milled in HACCP facilities for international buyers.`,
+    published: true,
+    createdAt: new Date(Date.now() - 86400000 * 5)
+  },
+  {
+    id: uuidv4(),
+    title: 'Private Label Manufacturing: How Startups Launch in 6 Weeks',
+    slug: 'private-label-manufacturing-launch-guide',
+    excerpt: 'A practical playbook for new D2C brands & global distributors looking to private-label premium Indian spices, herbal powders and snacks.',
+    coverImage: 'https://images.pexels.com/photos/35531300/pexels-photo-35531300.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
+    author: 'SatvaRoot Export Desk',
+    tags: ['Private Label', 'OEM', 'Branding'],
+    content: `Launching your own spice or wellness brand no longer requires a factory \u2014 just the right manufacturing partner.\n\n## The 6-Week Private Label Roadmap\n\n**Week 1\u20132:** Recipe formulation & sample approval\n**Week 3:** Packaging design & label compliance\n**Week 4\u20135:** Production batch & QC\n**Week 6:** Documentation & ship-out\n\n## What We Provide\n\n- Custom recipe formulation (spice blends, herbal mixes)\n- Packaging design + procurement (pouches, jars, boxes)\n- FSSAI labeling, nutrition panel, barcode setup\n- Export documentation (COO, phyto, MSDS, COA)\n- MOQ from just **1,000 units**\n\n## Categories We Private-Label\n\nMasala blends, herbal powders, ayurvedic churnas, banana chips, roasted snacks, dry fruits & seasonings.\n\nReady to launch? Send your concept brief and we\u2019ll come back with a quote within 48 hours.`,
+    published: true,
+    createdAt: new Date(Date.now() - 86400000 * 12)
+  }
+]
+
 async function ensureSeeded() {
   const db = await getDb()
   const count = await db.collection('products').countDocuments()
@@ -244,6 +283,10 @@ async function ensureSeeded() {
     await db.collection('products').insertMany(
       SAMPLE_PRODUCTS.map(p => ({ ...p, createdAt: new Date(), updatedAt: new Date() }))
     )
+  }
+  const blogCount = await db.collection('blogs').countDocuments()
+  if (blogCount === 0) {
+    await db.collection('blogs').insertMany(SAMPLE_BLOGS.map(b => ({ ...b, updatedAt: new Date() })))
   }
 }
 
@@ -395,6 +438,61 @@ async function handle(request, segments) {
     if (method === 'DELETE') {
       if (!await verifyAdmin(request)) return err('Unauthorized', 401)
       await db.collection('enquiries').deleteOne({ id })
+      return json({ ok: true })
+    }
+  }
+
+  // ----- Blogs -----
+  if (path === '/blogs' && method === 'GET') {
+    const blogs = await db.collection('blogs').find({ published: { $ne: false } }, { projection: { _id: 0, content: 0 } }).sort({ createdAt: -1 }).toArray()
+    return json({ blogs })
+  }
+  if (path === '/blogs/all' && method === 'GET') {
+    if (!await verifyAdmin(request)) return err('Unauthorized', 401)
+    const blogs = await db.collection('blogs').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).toArray()
+    return json({ blogs })
+  }
+  if (path === '/blogs' && method === 'POST') {
+    if (!await verifyAdmin(request)) return err('Unauthorized', 401)
+    const body = await request.json()
+    const blog = {
+      id: uuidv4(),
+      title: body.title || 'Untitled',
+      slug: (body.slug || body.title || 'post').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      excerpt: body.excerpt || '',
+      content: body.content || '',
+      coverImage: body.coverImage || 'https://images.unsplash.com/photo-1523112784166-c04db3a3bb7c?crop=entropy&cs=srgb&fm=jpg&w=1200&q=85',
+      author: body.author || 'SatvaRoot Export Desk',
+      tags: body.tags || [],
+      published: body.published !== false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    await db.collection('blogs').insertOne(blog)
+    delete blog._id
+    return json({ blog })
+  }
+  const blogSlugMatch = path.match(/^\/blogs\/slug\/([^/]+)$/)
+  if (blogSlugMatch && method === 'GET') {
+    const blog = await db.collection('blogs').findOne({ slug: blogSlugMatch[1] }, { projection: { _id: 0 } })
+    if (!blog) return err('Not found', 404)
+    return json({ blog })
+  }
+  const blogIdMatch = path.match(/^\/blogs\/([^/]+)$/)
+  if (blogIdMatch && blogIdMatch[1] !== 'all') {
+    const id = blogIdMatch[1]
+    if (method === 'PUT') {
+      if (!await verifyAdmin(request)) return err('Unauthorized', 401)
+      const body = await request.json()
+      delete body._id; delete body.id; delete body.createdAt
+      body.updatedAt = new Date()
+      await db.collection('blogs').updateOne({ id }, { $set: body })
+      const blog = await db.collection('blogs').findOne({ id }, { projection: { _id: 0 } })
+      return json({ blog })
+    }
+    if (method === 'DELETE') {
+      if (!await verifyAdmin(request)) return err('Unauthorized', 401)
+      await db.collection('blogs').deleteOne({ id })
       return json({ ok: true })
     }
   }
