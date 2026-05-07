@@ -149,7 +149,10 @@ const App = () => {
               {t.sendEnquiry} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          <button onClick={() => setMobileNavOpen(v => !v)} className="lg:hidden text-white p-2"><Menu /></button>
+          <div className="flex items-center gap-2">
+            <div id="google_translate_element" className="hidden sm:block min-w-[180px] text-xs" />
+            <button onClick={() => setMobileNavOpen(v => !v)} className="lg:hidden text-white p-2"><Menu /></button>
+          </div>
         </div>
         {mobileNavOpen && (
           <div className="lg:hidden bg-[#062019] border-t border-[#d4af37]/20 px-6 py-4 space-y-3 text-white">
