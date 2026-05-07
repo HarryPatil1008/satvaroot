@@ -53,6 +53,23 @@ const TESTIMONIALS = [
   { name: 'Michael Chen', role: 'Distributor, Singapore', text: 'Premium banana chips and masalas. Their private label service helped us launch our own brand in 6 weeks.', rating: 5 }
 ]
 
+
+const LANG_CONTENT = {
+  nav: ['home','about','products','countries','certifications','contact'],
+  blog: 'Blog',
+  catalogue: 'Catalogue',
+  sendEnquiry: 'Send Enquiry',
+  premiumExporter: 'Premium Indian Exporter · 25+ Countries',
+  heroTitle1: 'Pure',
+  heroTitle2: 'Roots',
+  heroTitle3: 'of India',
+  heroTitle4: 'to the',
+  heroTitle5: 'World',
+  heroDesc: 'Trusted exporter of Turmeric, Ashwagandha, Spices, Banana Chips & Ayurvedic products. Farm-fresh sourcing. Lab-tested quality. International shipping.',
+  exploreProducts: 'Explore Products',
+  whatsappUs: 'WhatsApp Us'
+}
+
 const FAQS = [
   { q: 'What is the minimum order quantity (MOQ)?', a: 'MOQs vary by product — typically 100Kg for premium herbal powders, 200-500Kg for spices and snacks, and 1000Kg+ for bulk turmeric fingers. Private label MOQs start at 1000 units.' },
   { q: 'Which countries do you export to?', a: 'We currently export to 25+ countries including UAE, USA, UK, Canada, Australia, Germany, Singapore, Saudi Arabia, Netherlands, France, Japan, and more.' },
@@ -71,9 +88,27 @@ const App = () => {
   const [enqOpen, setEnqOpen] = useState(false)
   const [catalogueOpen, setCatalogueOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const t = LANG_CONTENT
 
   useEffect(() => {
     fetch('/api/products').then(r => r.json()).then(d => { setProducts(d.products || []); setLoading(false) }).catch(() => setLoading(false))
+
+    if (!document.getElementById('google-translate-script')) {
+      window.googleTranslateElementInit = () => {
+        if (window.google?.translate?.TranslateElement) {
+          new window.google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: '',
+            autoDisplay: false
+          }, 'google_translate_element')
+        }
+      }
+      const script = document.createElement('script')
+      script.id = 'google-translate-script'
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+      script.async = true
+      document.body.appendChild(script)
+    }
   }, [])
 
   const filtered = useMemo(() => {
@@ -101,29 +136,32 @@ const App = () => {
             </div>
           </a>
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-white/85">
-            {['home','about','products','countries','certifications','contact'].map(s => (
-              <a key={s} href={`#${s}`} className="hover:text-[#d4af37] transition capitalize">{s}</a>
+            {['home','about','products','countries','certifications','contact'].map((s, i) => (
+              <a key={s} href={`#${s}`} className="hover:text-[#d4af37] transition capitalize">{t.nav[i]}</a>
             ))}
-            <Link href="/blog" className="hover:text-[#d4af37] transition">Blog</Link>
+            <Link href="/blog" className="hover:text-[#d4af37] transition">{t.blog}</Link>
           </div>
           <div className="hidden lg:flex items-center gap-3">
             <Button asChild variant="outline" className="border-[#d4af37]/40 bg-transparent text-[#d4af37] hover:bg-[#d4af37] hover:text-[#0f3d2e]">
-              <Link href="/catalogue"><Download className="w-4 h-4 mr-2" /> Catalogue</Link>
+              <Link href="/catalogue"><Download className="w-4 h-4 mr-2" /> {t.catalogue}</Link>
             </Button>
             <Button onClick={() => setEnqOpen(true)} className="bg-gradient-to-r from-[#d4af37] to-[#b08930] text-[#0f3d2e] hover:opacity-90 font-semibold">
-              Send Enquiry <ArrowRight className="w-4 h-4 ml-1" />
+              {t.sendEnquiry} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          <button onClick={() => setMobileNavOpen(v => !v)} className="lg:hidden text-white p-2"><Menu /></button>
+          <div className="flex items-center gap-2">
+            <div id="google_translate_element" className="hidden sm:block min-w-[180px] text-xs" />
+            <button onClick={() => setMobileNavOpen(v => !v)} className="lg:hidden text-white p-2"><Menu /></button>
+          </div>
         </div>
         {mobileNavOpen && (
           <div className="lg:hidden bg-[#062019] border-t border-[#d4af37]/20 px-6 py-4 space-y-3 text-white">
-            {['home','about','products','countries','certifications','contact'].map(s => (
-              <a key={s} onClick={() => setMobileNavOpen(false)} href={`#${s}`} className="block capitalize py-1">{s}</a>
+            {['home','about','products','countries','certifications','contact'].map((s, i) => (
+              <a key={s} onClick={() => setMobileNavOpen(false)} href={`#${s}`} className="block capitalize py-1">{t.nav[i]}</a>
             ))}
-            <Link onClick={() => setMobileNavOpen(false)} href="/blog" className="block py-1">Blog</Link>
-            <Link onClick={() => setMobileNavOpen(false)} href="/catalogue" className="block py-1">Catalogue</Link>
-            <Button onClick={() => { setEnqOpen(true); setMobileNavOpen(false) }} className="w-full bg-[#d4af37] text-[#0f3d2e] font-semibold">Send Enquiry</Button>
+            <Link onClick={() => setMobileNavOpen(false)} href="/blog" className="block py-1">{t.blog}</Link>
+            <Link onClick={() => setMobileNavOpen(false)} href="/catalogue" className="block py-1">{t.catalogue}</Link>
+            <Button onClick={() => { setEnqOpen(true); setMobileNavOpen(false) }} className="w-full bg-[#d4af37] text-[#0f3d2e] font-semibold">{t.sendEnquiry}</Button>
           </div>
         )}
       </nav>
@@ -138,26 +176,25 @@ const App = () => {
             <div className="fade-up">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-6">
                 <Sparkles className="w-4 h-4 text-[#d4af37]" />
-                <span className="text-xs uppercase tracking-[0.2em] text-[#d4af37]">Premium Indian Exporter · 25+ Countries</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-[#d4af37]">{t.premiumExporter}</span>
               </div>
               <h1 className="font-display text-5xl lg:text-7xl leading-[1.05] text-white mb-6">
-                Pure <span className="gold-text">Roots</span> of India<br />
-                to the <span className="gold-text">World</span>
+                {t.heroTitle1} <span className="gold-text">{t.heroTitle2}</span> {t.heroTitle3}<br />
+                {t.heroTitle4} <span className="gold-text">{t.heroTitle5}</span>
               </h1>
               <p className="text-white/75 text-lg lg:text-xl mb-8 max-w-xl leading-relaxed">
-                Trusted exporter of Turmeric, Ashwagandha, Spices, Banana Chips & Ayurvedic products. 
-                Farm-fresh sourcing. Lab-tested quality. International shipping.
+                {t.heroDesc}
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button asChild size="lg" className="bg-gradient-to-r from-[#d4af37] to-[#b08930] text-[#0f3d2e] hover:opacity-90 font-semibold h-12 px-7 shine">
-                  <a href="#products">Explore Products <ArrowRight className="w-5 h-5 ml-2" /></a>
+                  <a href="#products">{t.exploreProducts} <ArrowRight className="w-5 h-5 ml-2" /></a>
                 </Button>
                 <Button onClick={() => setEnqOpen(true)} size="lg" variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white hover:text-[#0f3d2e] h-12 px-7">
-                  <Send className="w-4 h-4 mr-2" /> Send Enquiry
+                  <Send className="w-4 h-4 mr-2" /> {t.sendEnquiry}
                 </Button>
                 <Button asChild size="lg" className="bg-[#25d366] hover:bg-[#1fb955] text-white h-12 px-7 font-semibold">
                   <a href={waLink('Hello SatvaRoot, I would like to know more about your export products.')} target="_blank" rel="noreferrer">
-                    <MessageCircle className="w-5 h-5 mr-2" /> WhatsApp Us
+                    <MessageCircle className="w-5 h-5 mr-2" /> {t.whatsappUs}
                   </a>
                 </Button>
               </div>
