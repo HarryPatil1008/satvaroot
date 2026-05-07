@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 
-const MONGO_URL = process.env.MONGO_URL
+const MONGO_URL = process.env.MONGO_URL || process.env.MONGO_URI
 const DB_NAME = process.env.DB_NAME || 'satvaroot'
 const ENQUIRY_NOTIFY_WEBHOOK_URL = process.env.ENQUIRY_NOTIFY_WEBHOOK_URL
 
 let _client = null
 async function getDb() {
   if (!MONGO_URL) {
-    throw new Error('MONGO_URL is not configured')
+    throw new Error('MONGO_URL (or MONGO_URI) is not configured')
   }
   if (!_client) {
     _client = new MongoClient(MONGO_URL)
