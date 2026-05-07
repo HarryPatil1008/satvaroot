@@ -625,6 +625,18 @@ const Row = ({ label, value }) => value ? (
   <div className="flex gap-3"><div className="text-[10px] uppercase tracking-widest text-[#9c7a2a] w-24 flex-shrink-0 pt-0.5">{label}</div><div className="text-[#0f3d2e]/80 flex-1">{value}</div></div>
 ) : null
 
+
+const parseApiError = async (response) => {
+  const raw = await response.text()
+  if (!raw) return `Request failed (${response.status})`
+  try {
+    const data = JSON.parse(raw)
+    return data?.error || data?.message || `Request failed (${response.status})`
+  } catch {
+    return `Request failed (${response.status})`
+  }
+}
+
 const FooterCol = ({ title, items }) => (
   <div>
     <div className="text-sm font-semibold text-white mb-4 uppercase tracking-widest">{title}</div>
@@ -645,10 +657,12 @@ const EnquiryForm = ({ onSuccess, preProduct, dark = true }) => {
       const r = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
       if (r.ok) { onSuccess?.(); setForm({ name: '', company: '', country: '', email: '', phone: '', whatsapp: '', product: '', quantity: '', message: '' }) }
       else {
-        const data = await r.json().catch(() => ({}))
-        toast.error(data.error || 'Failed to send enquiry')
+        const message = await parseApiError(r)
+        toast.error(message)
       }
-    } catch { toast.error('Network error') }
+    } catch (error) {
+      toast.error(error?.message || 'Network error. Please check server connection.')
+    }
     setSubmitting(false)
   }
   const cls = dark
@@ -683,9 +697,20 @@ const CatalogueForm = ({ onClose }) => {
       const data = Object.fromEntries(new FormData(e.target))
       data.product = 'Catalogue Request'
       data.message = 'Please send me the full product catalogue.'
-      const r = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      setSubmitting(false)
-      if (r.ok) { toast.success('Catalogue request sent! Check your email.'); onClose?.() }
+      try {
+        const r = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+        if (r.ok) {
+          toast.success('Catalogue request sent! Check your email.')
+          onClose?.()
+        } else {
+          const message = await parseApiError(r)
+          toast.error(message)
+        }
+      } catch (error) {
+        toast.error(error?.message || 'Network error. Please check server connection.')
+      } finally {
+        setSubmitting(false)
+      }
     }} className="space-y-3">
       <Input name="name" required placeholder="Your Name *" />
       <Input name="email" required type="email" placeholder="Business Email *" />
