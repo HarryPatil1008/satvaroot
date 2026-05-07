@@ -545,6 +545,11 @@ const App = () => {
         </div>
       </footer>
 
+      <div className="fixed bottom-6 left-6 z-40 hidden md:block bg-white/95 rounded-lg shadow-lg border border-[#0f3d2e]/15 px-3 py-2">
+        <div className="text-[10px] uppercase tracking-wider text-[#0f3d2e]/60 mb-1">Translate</div>
+        <div id="google_translate_element" className="text-xs" />
+      </div>
+
       {/* ---------- FLOATING WHATSAPP ---------- */}
       <a href={waLink('Hi SatvaRoot, I am interested in your export products.')} target="_blank" rel="noreferrer"
         className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[#25d366] flex items-center justify-center shadow-2xl pulse-ring hover:scale-110 transition">
